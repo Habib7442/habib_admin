@@ -7,12 +7,12 @@ export const blogSchema = z.object({
   content: z.string().min(1, 'Content is required'),
   cover_url: z.string().url('Invalid cover URL').optional().or(z.literal('')),
   category: z.string().optional(),
-  tags: z.array(z.string()).default([]),
-  status: z.enum(['published', 'draft']).default('draft'),
+  tags: z.array(z.string()),
+  status: z.enum(['published', 'draft']),
   published_at: z.string().optional(),
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
-  featured: z.boolean().default(false),
+  featured: z.boolean(),
 })
 
 export type BlogValues = z.infer<typeof blogSchema>

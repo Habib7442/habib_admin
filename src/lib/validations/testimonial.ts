@@ -6,9 +6,9 @@ export const testimonialSchema = z.object({
   company: z.string().optional(),
   avatar_url: z.string().url('Invalid avatar URL').optional().or(z.literal('')),
   review: z.string().min(1, 'Review text is required'),
-  rating: z.number().int().min(1).max(5).default(5),
+  rating: z.number().int().min(1).max(5),
   project_id: z.string().uuid().optional().nullable(),
-  featured: z.boolean().default(false),
+  featured: z.boolean(),
 })
 
 export type TestimonialValues = z.infer<typeof testimonialSchema>

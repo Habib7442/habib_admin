@@ -5,9 +5,9 @@ export const designSchema = z.object({
   image_url: z.string().url('Image is required'),
   description: z.string().optional(),
   category: z.enum(['ai_generated', 'branding', 'ui', 'illustration', 'photoshoot']),
-  tools: z.array(z.string()).default([]),
-  tags: z.array(z.string()).default([]),
-  featured: z.boolean().default(false),
+  tools: z.array(z.string()),
+  tags: z.array(z.string()),
+  featured: z.boolean(),
 })
 
 export type DesignValues = z.infer<typeof designSchema>
