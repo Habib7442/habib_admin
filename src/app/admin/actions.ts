@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
 import { isHttpUrl, isImageAssetId, sanityWrite } from '@/lib/sanity'
 
-export type FormState = { error?: string }
+export type FormState = { error?: string; success?: boolean }
 
 type Parsed = {
   title: string
