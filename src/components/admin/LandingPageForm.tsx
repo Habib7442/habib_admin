@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import type { FormState } from '@/app/admin/actions'
+import { uploadToSanity } from '@/lib/client-upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,7 +25,17 @@ type Props = {
 }
 
 export function LandingPageForm({ heading, submitLabel, action, initial = {} }: Props) {
-  const [state, formAction, pending] = useActionState<FormState, FormData>(action, {})
+  const [state, formAction, pending] = useActionState<FormState, FormData>(async (prev, formData) => {
+    // Images go to /api/upload one at a time (Vercel caps request bodies at 4.5MB); the action only gets asset ids.
+    try {
+      const file = formData.get('image')
+      if (file instanceof File && file.size > 0) formData.set('imageAsset', await uploadToSanity(file))
+      formData.delete('image')
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : 'Image upload failed' }
+    }
+    return action(prev, formData)
+  }, {})
   const [preview, setPreview] = useState<string | null>(null)
   const isEdit = !!initial.imageUrl
   const shownImage = preview ?? (initial.imageUrl ? `${initial.imageUrl}?w=800&auto=format` : null)
