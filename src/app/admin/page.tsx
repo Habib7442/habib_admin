@@ -1,18 +1,19 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { LayoutTemplate, Star, Users } from 'lucide-react'
+import { FolderKanban, LayoutTemplate, Star, Users } from 'lucide-react'
 import { requireAuth } from '@/lib/session'
 import { sanityWrite } from '@/lib/sanity'
 import { Button } from '@/components/ui/button'
 
 type Recent = { _id: string; title: string; imageUrl?: string; ratingCount?: number; ratingTotal?: number }
-type Stats = { total: number; ratingCount: number; ratingTotal: number; recent: Recent[] }
+type Stats = { total: number; projects: number; ratingCount: number; ratingTotal: number; recent: Recent[] }
 
 export default async function DashboardPage() {
   await requireAuth()
   const base = '_type == "landingPage" && !(_id in path("drafts.**"))'
   const stats = await sanityWrite.fetch<Stats>(`{
     "total": count(*[${base}]),
+    "projects": count(*[_type == "project" && !(_id in path("drafts.**"))]),
     "ratingCount": math::sum(*[${base}].ratingCount),
     "ratingTotal": math::sum(*[${base}].ratingTotal),
     "recent": *[${base}] | order(_createdAt desc)[0...4] {
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
 
   const cards = [
     { label: 'Landing pages', value: stats.total, icon: LayoutTemplate },
+    { label: 'Projects', value: stats.projects, icon: FolderKanban },
     { label: 'Total ratings', value: ratingCount, icon: Users },
     { label: 'Average rating', value: avg, icon: Star },
   ]
@@ -36,7 +38,7 @@ export default async function DashboardPage() {
         <p className="text-sm text-neutral-400">Overview of your portfolio content.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
           <div key={c.label} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
             <div className="flex items-center justify-between text-neutral-400">
