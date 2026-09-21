@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
-import { isHttpUrl, isImageAssetId, sanityWrite } from '@/lib/sanity'
+import { isHttpUrl, isImageAssetId, sanityWrite, slugTaken } from '@/lib/sanity'
 import { generateSlug } from '@/lib/utils/slug'
 import type { FormState } from '../actions'
 
@@ -68,13 +68,6 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   }
 }
 
-async function slugTaken(slug: string, exceptId?: string) {
-  return sanityWrite.fetch<boolean>(
-    'count(*[_type == "project" && slug.current == $slug && !(_id in [$id, "drafts." + $id])]) > 0',
-    { slug, id: exceptId ?? '' }
-  )
-}
-
 function galleryItems(assetIds: string[]) {
   return assetIds.map((id) => ({
     _type: 'image',
@@ -93,7 +86,7 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
   const p = parseForm(formData)
   if ('error' in p) return p
   if (!p.thumbnailAsset) return { error: 'Thumbnail is required' }
-  if (await slugTaken(p.slug)) return { error: `The slug "${p.slug}" is already used by another project` }
+  if (await slugTaken('project', p.slug)) return { error: `The slug "${p.slug}" is already used by another project` }
 
   try {
     await sanityWrite.create({
@@ -126,7 +119,7 @@ export async function updateProject(id: string, _prev: FormState, formData: Form
 
   const p = parseForm(formData)
   if ('error' in p) return p
-  if (await slugTaken(p.slug, id)) return { error: `The slug "${p.slug}" is already used by another project` }
+  if (await slugTaken('project', p.slug, id)) return { error: `The slug "${p.slug}" is already used by another project` }
 
   try {
     const current = await sanityWrite.fetch<{ images?: { _key: string }[] } | null>(

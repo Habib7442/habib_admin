@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FolderKanban, LayoutDashboard, LayoutTemplate, LogOut, type LucideIcon } from 'lucide-react'
+import { FolderKanban, LayoutDashboard, LayoutTemplate, LogOut, Newspaper, Palette, type LucideIcon } from 'lucide-react'
 import { logout } from '@/app/login/actions'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +13,8 @@ const NAV: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/landing-pages', label: 'Landing Pages', icon: LayoutTemplate },
   { href: '/admin/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/admin/designs', label: 'Designs', icon: Palette },
+  { href: '/admin/blogs', label: 'Blogs', icon: Newspaper },
 ]
 
 export function Sidebar() {

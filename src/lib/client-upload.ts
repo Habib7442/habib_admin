@@ -35,6 +35,15 @@ async function shrink(file: File): Promise<File> {
   throw new Error(`${file.name} could not be shrunk enough. Try a smaller image.`)
 }
 
+/** Public CDN url for an asset id like image-<hash>-<w>x<h>-<ext>. */
+export function sanityImageUrl(assetId: string): string {
+  const [, hash, size, ext] = assetId.split('-')
+  // Must be direct process.env.NEXT_PUBLIC_* reads so Next inlines them into the browser bundle.
+  const project = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+  const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET
+  return `https://cdn.sanity.io/images/${project}/${dataset}/${hash}-${size}.${ext}`
+}
+
 /** Uploads one image (shrinking it first if needed) and returns the Sanity asset id. */
 export async function uploadToSanity(file: File): Promise<string> {
   const ready = await shrink(file)

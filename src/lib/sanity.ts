@@ -28,6 +28,14 @@ export function isHttpUrl(value: string) {
   }
 }
 
+/** True if another document of this type (ignoring `exceptId` and its draft) already uses the slug. */
+export async function slugTaken(type: string, slug: string, exceptId?: string) {
+  return sanityWrite.fetch<boolean>(
+    'count(*[_type == $type && slug.current == $slug && !(_id in [$id, "drafts." + $id])]) > 0',
+    { type, slug, id: exceptId ?? '' }
+  )
+}
+
 /** Sanity image asset ids look like image-<hash>-<w>x<h>-<ext>. */
 export function isImageAssetId(value: string) {
   return /^image-[a-zA-Z0-9]+-\d+x\d+-[a-z0-9]+$/.test(value)
