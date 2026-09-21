@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
-import { isHttpUrl, isImageAssetId, sanityWrite, slugTaken } from '@/lib/sanity'
+import { deleteDocWithAssets, isHttpUrl, isImageAssetId, sanityWrite, slugTaken, withAssetCleanup } from '@/lib/sanity'
 import { generateSlug } from '@/lib/utils/slug'
 import type { FormState } from '../actions'
 
@@ -152,7 +152,7 @@ export async function updateProject(id: string, _prev: FormState, formData: Form
     else unset.push('githubUrl')
     if (p.thumbnailAsset) set['thumbnail.asset'] = { _type: 'reference', _ref: p.thumbnailAsset }
 
-    await sanityWrite.patch(id).set(set).unset(unset).commit()
+    await withAssetCleanup(id, () => sanityWrite.patch(id).set(set).unset(unset).commit())
   } catch (e) {
     console.error(e)
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
@@ -164,9 +164,6 @@ export async function updateProject(id: string, _prev: FormState, formData: Form
 
 export async function deleteProject(id: string) {
   await requireAuth()
-  await sanityWrite.delete({
-    query: '*[_type == "project" && _id in [$id, "drafts." + $id]]',
-    params: { id },
-  })
+  await deleteDocWithAssets(id)
   refreshProjects()
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireAuth } from '@/lib/session'
-import { isHttpUrl, isImageAssetId, sanityWrite } from '@/lib/sanity'
+import { isHttpUrl, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
 import type { FormState } from '../actions'
 
 // Fixed id, so there is only ever one settings document.
@@ -53,7 +53,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
 
   try {
     await sanityWrite.createIfNotExists({ _id: SETTINGS_ID, _type: 'siteSettings' })
-    await sanityWrite.patch(SETTINGS_ID).set(set).unset(unset).commit()
+    await withAssetCleanup(SETTINGS_ID, () => sanityWrite.patch(SETTINGS_ID).set(set).unset(unset).commit())
   } catch (e) {
     console.error(e)
     return { error: 'Saving to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }

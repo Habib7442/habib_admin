@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
-import { isImageAssetId, sanityWrite } from '@/lib/sanity'
+import { deleteDocWithAssets, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
 import { DESIGN_CATEGORY_VALUES } from '@/lib/design-categories'
 import type { FormState } from '../actions'
 
@@ -126,7 +126,7 @@ export async function updateDesign(id: string, _prev: FormState, formData: FormD
     else unset.push('description')
     if (p.imageAsset) set['image.asset'] = { _type: 'reference', _ref: p.imageAsset }
 
-    await sanityWrite.patch(id).set(set).unset(unset).commit()
+    await withAssetCleanup(id, () => sanityWrite.patch(id).set(set).unset(unset).commit())
   } catch (e) {
     console.error(e)
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
@@ -138,9 +138,6 @@ export async function updateDesign(id: string, _prev: FormState, formData: FormD
 
 export async function deleteDesign(id: string) {
   await requireAuth()
-  await sanityWrite.delete({
-    query: '*[_type == "design" && _id in [$id, "drafts." + $id]]',
-    params: { id },
-  })
+  await deleteDocWithAssets(id)
   refreshDesigns()
 }

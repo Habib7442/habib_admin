@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
-import { isHttpUrl, isImageAssetId, sanityWrite } from '@/lib/sanity'
+import { deleteDocWithAssets, isHttpUrl, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
 
 export type FormState = { error?: string; success?: boolean }
 
@@ -80,7 +80,7 @@ export async function updateLandingPage(id: string, _prev: FormState, formData: 
     else unset.push('image.alt')
     if (imageAsset) set['image.asset'] = { _type: 'reference', _ref: imageAsset }
 
-    await sanityWrite.patch(id).set(set).unset(unset).commit()
+    await withAssetCleanup(id, () => sanityWrite.patch(id).set(set).unset(unset).commit())
   } catch (e) {
     console.error(e)
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
@@ -93,9 +93,6 @@ export async function updateLandingPage(id: string, _prev: FormState, formData: 
 export async function deleteLandingPage(id: string) {
   await requireAuth()
   // Deletes the published doc and any draft made in the Studio.
-  await sanityWrite.delete({
-    query: '*[_type == "landingPage" && _id in [$id, "drafts." + $id]]',
-    params: { id },
-  })
+  await deleteDocWithAssets(id)
   refreshAdmin()
 }

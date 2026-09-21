@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
-import { isImageAssetId, sanityWrite, slugTaken } from '@/lib/sanity'
+import { deleteDocWithAssets, isImageAssetId, sanityWrite, slugTaken, withAssetCleanup } from '@/lib/sanity'
 import { generateSlug } from '@/lib/utils/slug'
 import type { FormState } from '../actions'
 
@@ -130,7 +130,7 @@ export async function updateBlog(id: string, _prev: FormState, formData: FormDat
     if (p.coverAsset) set.coverImage = { _type: 'image', asset: { _type: 'reference', _ref: p.coverAsset } }
     else if (formData.get('removeCover') === 'on') unset.push('coverImage')
 
-    await sanityWrite.patch(id).set(set).unset(unset).commit()
+    await withAssetCleanup(id, () => sanityWrite.patch(id).set(set).unset(unset).commit())
   } catch (e) {
     console.error(e)
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
@@ -142,9 +142,6 @@ export async function updateBlog(id: string, _prev: FormState, formData: FormDat
 
 export async function deleteBlog(id: string) {
   await requireAuth()
-  await sanityWrite.delete({
-    query: '*[_type == "blog" && _id in [$id, "drafts." + $id]]',
-    params: { id },
-  })
+  await deleteDocWithAssets(id)
   refreshBlogs()
 }
