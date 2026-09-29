@@ -71,14 +71,12 @@ export default async function BlogsPage({ searchParams }: { searchParams: Promis
                 </div>
               )}
               <div className="space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-medium text-white">{b.title}</h2>
-                  <div className="flex shrink-0 gap-1">
-                    {b.featured && <Badge>Featured</Badge>}
-                    <Badge variant={b.status === 'published' ? 'default' : 'outline'}>
-                      {b.status === 'published' ? 'Published' : 'Draft'}
-                    </Badge>
-                  </div>
+                <h2 className="line-clamp-2 font-medium text-white">{b.title}</h2>
+                <div className="flex flex-wrap gap-1">
+                  {b.featured && <Badge>Featured</Badge>}
+                  <Badge variant={b.status === 'published' ? 'default' : 'outline'}>
+                    {b.status === 'published' ? 'Published' : 'Draft'}
+                  </Badge>
                 </div>
                 {b.excerpt && <p className="line-clamp-2 text-sm text-neutral-400">{b.excerpt}</p>}
                 <p className="text-xs text-neutral-500">
