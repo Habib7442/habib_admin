@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto'
-import { sanityWrite } from '@/lib/sanity'
+import { createHash, randomUUID } from 'node:crypto'
+import { privateId, sanityWrite } from '@/lib/sanity'
 import { corsJson, corsPreflight, isDisallowedCrossOrigin } from '@/lib/cors'
 
 // Public endpoint your portfolio's contact form posts to.
@@ -55,6 +55,8 @@ export async function POST(request: Request) {
     }
 
     await sanityWrite.create({
+      // Private id: hidden from the public API (names, emails and messages must never be readable).
+      _id: privateId(`contact-${randomUUID()}`),
       _type: 'contactMessage',
       name,
       email,

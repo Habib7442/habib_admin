@@ -109,3 +109,12 @@ export function imageError(file: File) {
   if (file.size > MAX_IMAGE_BYTES) return 'Image is too large after resizing (max 4MB)'
   return null
 }
+
+/**
+ * The dataset is public (free plan), but Sanity never shows documents whose _id contains a dot
+ * to anonymous visitors. So anything that must stay private (contact messages, unapproved
+ * reviews) is stored under a "private." id; the admin's token can still read and edit it.
+ */
+export const PRIVATE_PREFIX = 'private.'
+export const privateId = (id: string) => (id.startsWith(PRIVATE_PREFIX) ? id : PRIVATE_PREFIX + id)
+export const publicId = (id: string) => id.replace(/^private\./, '')

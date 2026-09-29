@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FolderKanban, LayoutDashboard, LayoutTemplate, LogOut, Mail, Newspaper, Palette, Settings, type LucideIcon } from 'lucide-react'
+import { FolderKanban, LayoutDashboard, LayoutTemplate, LogOut, Mail, MessageSquareQuote, Newspaper, Palette, Settings, type LucideIcon } from 'lucide-react'
 import { logout } from '@/app/login/actions'
 import { cn } from '@/lib/utils'
 
@@ -16,10 +16,12 @@ const NAV: NavItem[] = [
   { href: '/admin/designs', label: 'Designs', icon: Palette },
   { href: '/admin/blogs', label: 'Blogs', icon: Newspaper },
   { href: '/admin/messages', label: 'Messages', icon: Mail },
+  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
-export function Sidebar({ unreadMessages = 0 }: { unreadMessages?: number }) {
+// badges: count shown next to a nav item, keyed by href (e.g. new messages, pending reviews).
+export function Sidebar({ badges = {} }: { badges?: Record<string, number> }) {
   const pathname = usePathname()
   const isActive = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/')
@@ -52,9 +54,9 @@ export function Sidebar({ unreadMessages = 0 }: { unreadMessages?: number }) {
           >
             <item.icon className={cn('size-4', isActive(item) && 'text-violet-400')} />
             {item.label}
-            {item.href === '/admin/messages' && unreadMessages > 0 && (
+            {(badges[item.href] ?? 0) > 0 && (
               <span className="ml-auto rounded-full bg-violet-500 px-1.5 text-xs font-medium text-white">
-                {unreadMessages}
+                {badges[item.href]}
               </span>
             )}
           </Link>

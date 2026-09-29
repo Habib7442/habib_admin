@@ -1,12 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { FolderKanban, LayoutTemplate, Mail, MailOpen, Newspaper, Palette, Star, Users } from 'lucide-react'
+import { FolderKanban, LayoutTemplate, Mail, MailOpen, MessageSquareQuote, Newspaper, Palette, Star, Users } from 'lucide-react'
 import { requireAuth } from '@/lib/session'
 import { sanityWrite } from '@/lib/sanity'
 import { Button } from '@/components/ui/button'
 
 type Recent = { _id: string; title: string; imageUrl?: string; ratingCount?: number; ratingTotal?: number }
-type Stats = { total: number; projects: number; designs: number; blogs: number; newMessages: number; messages: number; ratingCount: number; ratingTotal: number; recent: Recent[] }
+type Stats = { total: number; projects: number; designs: number; blogs: number; newMessages: number; messages: number; pendingReviews: number; ratingCount: number; ratingTotal: number; recent: Recent[] }
 
 export default async function DashboardPage() {
   await requireAuth()
@@ -18,6 +18,7 @@ export default async function DashboardPage() {
     "blogs": count(*[_type == "blog" && !(_id in path("drafts.**"))]),
     "newMessages": count(*[_type == "contactMessage" && coalesce(status, "new") == "new"]),
     "messages": count(*[_type == "contactMessage"]),
+    "pendingReviews": count(*[_type == "review" && coalesce(status, "pending") == "pending"]),
     "ratingCount": math::sum(*[${base}].ratingCount),
     "ratingTotal": math::sum(*[${base}].ratingTotal),
     "recent": *[${base}] | order(_createdAt desc)[0...4] {
@@ -35,6 +36,7 @@ export default async function DashboardPage() {
     { label: 'Blogs', value: stats.blogs, icon: Newspaper },
     { label: 'New messages', value: stats.newMessages, icon: Mail },
     { label: 'All messages', value: stats.messages, icon: MailOpen },
+    { label: 'Reviews to check', value: stats.pendingReviews, icon: MessageSquareQuote },
     { label: 'Total ratings', value: ratingCount, icon: Users },
     { label: 'Average rating', value: avg, icon: Star },
   ]
