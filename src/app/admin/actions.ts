@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { revalidatePortfolio } from '@/lib/portfolio'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
 import { deleteDocWithAssets, isHttpUrl, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
@@ -29,9 +30,11 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   return { title, description, liveUrl, alt, imageAsset }
 }
 
-function refreshAdmin() {
+/** Admin lists here, the public portfolio there (its own page via `paths`). */
+async function refreshAdmin(paths: string[] = []) {
   revalidatePath('/admin', 'layout')
   revalidatePath('/')
+  await revalidatePortfolio(paths)
 }
 
 export async function createLandingPage(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -57,7 +60,7 @@ export async function createLandingPage(_prev: FormState, formData: FormData): P
     return { error: 'Upload to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshAdmin()
+  await refreshAdmin()
   redirect('/admin/landing-pages')
 }
 
@@ -86,7 +89,7 @@ export async function updateLandingPage(id: string, _prev: FormState, formData: 
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshAdmin()
+  await refreshAdmin()
   redirect('/admin/landing-pages')
 }
 
@@ -94,5 +97,5 @@ export async function deleteLandingPage(id: string) {
   await requireAuth()
   // Deletes the published doc and any draft made in the Studio.
   await deleteDocWithAssets(id)
-  refreshAdmin()
+  await refreshAdmin()
 }

@@ -2,6 +2,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
+import { revalidatePortfolio } from '@/lib/portfolio'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
 import { deleteDocWithAssets, isHttpUrl, isImageAssetId, sanityWrite, slugTaken, withAssetCleanup } from '@/lib/sanity'
@@ -76,8 +77,10 @@ function galleryItems(assetIds: string[]) {
   }))
 }
 
-function refreshProjects() {
+/** Admin lists here, the public portfolio there (its own page via `paths`). */
+async function refreshProjects(paths: string[] = []) {
   revalidatePath('/admin', 'layout')
+  await revalidatePortfolio(paths)
 }
 
 export async function createProject(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -110,7 +113,7 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
     return { error: 'Upload to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshProjects()
+  await refreshProjects([`/work/${p.slug}`])
   redirect('/admin/projects')
 }
 
@@ -158,12 +161,12 @@ export async function updateProject(id: string, _prev: FormState, formData: Form
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshProjects()
+  await refreshProjects([`/work/${p.slug}`])
   redirect('/admin/projects')
 }
 
 export async function deleteProject(id: string) {
   await requireAuth()
   await deleteDocWithAssets(id)
-  refreshProjects()
+  await refreshProjects()
 }

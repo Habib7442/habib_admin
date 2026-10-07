@@ -2,6 +2,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
+import { revalidatePortfolio } from '@/lib/portfolio'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
 import { deleteDocWithAssets, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
@@ -65,8 +66,10 @@ function galleryItems(assetIds: string[]) {
   }))
 }
 
-function refreshDesigns() {
+/** Admin lists here, the public portfolio there (its own page via `paths`). */
+async function refreshDesigns(paths: string[] = []) {
   revalidatePath('/admin', 'layout')
+  await revalidatePortfolio(paths)
 }
 
 export async function createDesign(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -93,7 +96,7 @@ export async function createDesign(_prev: FormState, formData: FormData): Promis
     return { error: 'Saving to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshDesigns()
+  await refreshDesigns()
   redirect('/admin/designs')
 }
 
@@ -132,12 +135,12 @@ export async function updateDesign(id: string, _prev: FormState, formData: FormD
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshDesigns()
+  await refreshDesigns()
   redirect('/admin/designs')
 }
 
 export async function deleteDesign(id: string) {
   await requireAuth()
   await deleteDocWithAssets(id)
-  refreshDesigns()
+  await refreshDesigns()
 }

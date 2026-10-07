@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { revalidatePortfolio } from '@/lib/portfolio'
 import { requireAuth } from '@/lib/session'
 import { isHttpUrl, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
 import type { FormState } from '../actions'
@@ -60,5 +61,6 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   }
 
   revalidatePath('/admin/settings')
+  await revalidatePortfolio()
   return { success: true }
 }

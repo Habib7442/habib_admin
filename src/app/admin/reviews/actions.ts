@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { revalidatePortfolio } from '@/lib/portfolio'
 import { requireAuth } from '@/lib/session'
 import { deleteDocWithAssets, privateId, publicId, sanityWrite } from '@/lib/sanity'
 
@@ -42,6 +43,7 @@ export async function setReviewStatus(id: string, status: string) {
       .commit()
   }
   revalidatePath('/admin', 'layout')
+  await revalidatePortfolio()
 }
 
 export async function deleteReview(id: string) {
@@ -49,4 +51,5 @@ export async function deleteReview(id: string) {
   // Also permanently deletes the reviewer's uploaded photo.
   await deleteDocWithAssets(id)
   revalidatePath('/admin', 'layout')
+  await revalidatePortfolio()
 }

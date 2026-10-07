@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { revalidatePortfolio } from '@/lib/portfolio'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
 import { deleteDocWithAssets, isImageAssetId, sanityWrite, slugTaken, withAssetCleanup } from '@/lib/sanity'
@@ -54,8 +55,10 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   }
 }
 
-function refreshBlogs() {
+/** Admin lists here, the public portfolio there (its own page via `paths`). */
+async function refreshBlogs(paths: string[] = []) {
   revalidatePath('/admin', 'layout')
+  await revalidatePortfolio(paths)
 }
 
 export async function createBlog(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -86,7 +89,7 @@ export async function createBlog(_prev: FormState, formData: FormData): Promise<
     return { error: 'Saving to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshBlogs()
+  await refreshBlogs([`/blogs/${p.slug}`])
   redirect('/admin/blogs')
 }
 
@@ -136,12 +139,12 @@ export async function updateBlog(id: string, _prev: FormState, formData: FormDat
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  refreshBlogs()
+  await refreshBlogs([`/blogs/${p.slug}`])
   redirect('/admin/blogs')
 }
 
 export async function deleteBlog(id: string) {
   await requireAuth()
   await deleteDocWithAssets(id)
-  refreshBlogs()
+  await refreshBlogs()
 }
