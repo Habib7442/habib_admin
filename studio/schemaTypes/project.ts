@@ -26,6 +26,15 @@ export const project = defineType({
       validation: (rule) => rule.required().max(160),
     }),
     defineField({
+      name: 'plainDescription',
+      title: 'Plain description',
+      type: 'text',
+      rows: 2,
+      description:
+        'Shown on cards. 1–2 sentences for business owners: what the site does for the business. Falls back to the first sentence of the short description.',
+      validation: (rule) => rule.max(240).warning('Keep it to 1–2 short sentences.'),
+    }),
+    defineField({
       name: 'fullDescription',
       title: 'Full description',
       type: 'text',
