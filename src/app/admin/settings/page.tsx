@@ -8,7 +8,7 @@ export default async function SettingsPage() {
   const doc = await sanityWrite.fetch<SettingsInitial | null>(
     `*[_id == "siteSettings"][0]{
       name, tagline, bio, email, resumeUrl, githubUrl, linkedinUrl, twitterUrl, instagramUrl,
-      seoTitle, seoDescription,
+      seoTitle, seoDescription, services[]{ title, description, points },
       "profileUrl": profileImage.asset->url,
       "shareUrl": shareImage.asset->url
     }`

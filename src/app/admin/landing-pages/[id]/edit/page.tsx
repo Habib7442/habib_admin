@@ -4,7 +4,17 @@ import { requireAuth } from '@/lib/session'
 import { sanityWrite } from '@/lib/sanity'
 import { updateLandingPage } from '../../../actions'
 
-type Doc = { title: string; description?: string; liveUrl?: string; alt?: string; imageUrl?: string }
+type Doc = {
+  title: string
+  plainDescription?: string
+  description?: string
+  liveUrl?: string
+  alt?: string
+  imageUrl?: string
+  videoUrl?: string
+  webmUrl?: string
+  posterUrl?: string
+}
 
 export default async function EditLandingPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAuth()
@@ -12,7 +22,8 @@ export default async function EditLandingPage({ params }: { params: Promise<{ id
 
   const doc = await sanityWrite.fetch<Doc | null>(
     `*[_type == "landingPage" && _id == $id][0]{
-      title, description, liveUrl, "alt": image.alt, "imageUrl": image.asset->url
+      title, plainDescription, description, liveUrl, "alt": image.alt, "imageUrl": image.asset->url,
+      "videoUrl": previewVideo.asset->url, "webmUrl": previewVideoWebm.asset->url, "posterUrl": previewPoster.asset->url
     }`,
     { id }
   )

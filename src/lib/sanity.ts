@@ -11,11 +11,21 @@ export const sanityWrite = createClient({
 
 // Vercel rejects request bodies over 4.5MB, so each image is uploaded in its own request.
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+// Card preview loops (see the portfolio's scripts/compress-preview.sh) come out under 3MB.
+export const MAX_VIDEO_BYTES = 4 * 1024 * 1024
+export const VIDEO_TYPES = ['video/mp4', 'video/webm']
 
 export async function uploadImage(image: File) {
   return sanityWrite.assets.upload('image', Buffer.from(await image.arrayBuffer()), {
     filename: image.name,
     contentType: image.type,
+  })
+}
+
+export async function uploadVideo(video: File) {
+  return sanityWrite.assets.upload('file', Buffer.from(await video.arrayBuffer()), {
+    filename: video.name,
+    contentType: video.type,
   })
 }
 
@@ -30,7 +40,7 @@ export function isHttpUrl(value: string) {
 
 const CDN_IMAGE_URL = /cdn\.sanity\.io\/images\/[^/\s]+\/[^/\s]+\/([a-f0-9]+)-(\d+x\d+)\.([a-z0-9]+)/g
 
-/** Every image asset id a value points at: `_ref` references plus Sanity CDN urls inside text (blog Markdown). */
+/** Every image/file asset id a value points at: `_ref` references plus Sanity CDN image urls inside text (blog Markdown). */
 export function collectAssetIds(value: unknown, out = new Set<string>()): Set<string> {
   if (typeof value === 'string') {
     for (const m of value.matchAll(CDN_IMAGE_URL)) out.add(`image-${m[1]}-${m[2]}-${m[3]}`)
@@ -38,7 +48,7 @@ export function collectAssetIds(value: unknown, out = new Set<string>()): Set<st
     value.forEach((v) => collectAssetIds(v, out))
   } else if (value && typeof value === 'object') {
     const obj = value as Record<string, unknown>
-    if (typeof obj._ref === 'string' && isImageAssetId(obj._ref)) out.add(obj._ref)
+    if (typeof obj._ref === 'string' && (isImageAssetId(obj._ref) || isFileAssetId(obj._ref))) out.add(obj._ref)
     Object.values(obj).forEach((v) => collectAssetIds(v, out))
   }
   return out
@@ -103,10 +113,22 @@ export function isImageAssetId(value: string) {
   return /^image-[a-zA-Z0-9]+-\d+x\d+-[a-z0-9]+$/.test(value)
 }
 
+/** Sanity file asset ids (videos) look like file-<hash>-<ext>. */
+export function isFileAssetId(value: string) {
+  return /^file-[a-zA-Z0-9]+-[a-z0-9]+$/.test(value)
+}
+
 /** Returns an error message if the file is not an acceptable image, else null. */
 export function imageError(file: File) {
   if (!file.type.startsWith('image/')) return 'Files must be images'
   if (file.size > MAX_IMAGE_BYTES) return 'Image is too large after resizing (max 4MB)'
+  return null
+}
+
+/** Returns an error message if the file is not an acceptable preview video, else null. */
+export function videoError(file: File) {
+  if (!VIDEO_TYPES.includes(file.type)) return 'Videos must be MP4 or WebM'
+  if (file.size > MAX_VIDEO_BYTES) return 'Video is too large (max 4MB). Run scripts/compress-preview.sh first.'
   return null
 }
 

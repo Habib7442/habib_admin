@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 // Singleton: there is only ever one document, with the fixed id "siteSettings".
 export const siteSettings = defineType({
@@ -25,6 +25,37 @@ export const siteSettings = defineType({
       validation: (r) => r.max(160),
     }),
     defineField({name: 'shareImage', title: 'Share image (social preview)', type: 'image'}),
+    defineField({
+      name: 'services',
+      title: 'Services',
+      type: 'array',
+      description:
+        'The four rows of "My services" on the home page, in order. An empty row falls back to the built-in text.',
+      validation: (r) => r.max(4),
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'service',
+          fields: [
+            defineField({name: 'title', title: 'Title', type: 'string', validation: (r) => r.max(60)}),
+            defineField({
+              name: 'description',
+              title: 'One plain-language sentence',
+              type: 'string',
+              validation: (r) => r.max(200),
+            }),
+            defineField({
+              name: 'points',
+              title: 'Bullet points',
+              type: 'array',
+              of: [defineArrayMember({type: 'string', validation: (r) => r.max(60)})],
+              validation: (r) => r.max(3),
+            }),
+          ],
+          preview: {select: {title: 'title', subtitle: 'description'}},
+        }),
+      ],
+    }),
   ],
   preview: {prepare: () => ({title: 'Site settings'})},
 })

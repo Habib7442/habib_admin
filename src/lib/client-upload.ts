@@ -44,9 +44,15 @@ export function sanityImageUrl(assetId: string): string {
   return `https://cdn.sanity.io/images/${project}/${dataset}/${hash}-${size}.${ext}`
 }
 
-/** Uploads one image (shrinking it first if needed) and returns the Sanity asset id. */
+// Videos can't be shrunk in the browser; compress them first with the portfolio's scripts/compress-preview.sh.
+const MAX_VIDEO_BYTES = 4 * 1024 * 1024
+
+/** Uploads one image (shrinking it first if needed) or preview video and returns the Sanity asset id. */
 export async function uploadToSanity(file: File): Promise<string> {
-  const ready = await shrink(file)
+  if (file.type.startsWith('video/') && file.size > MAX_VIDEO_BYTES) {
+    throw new Error(`${file.name} is too large (max 4MB). Run scripts/compress-preview.sh first.`)
+  }
+  const ready = file.type.startsWith('video/') ? file : await shrink(file)
   const body = new FormData()
   body.append('file', ready)
 

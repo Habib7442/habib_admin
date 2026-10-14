@@ -11,6 +11,7 @@ type Item = {
   description?: string
   liveUrl?: string
   imageUrl?: string
+  hasVideo: boolean
   ratingCount?: number
   ratingTotal?: number
 }
@@ -19,7 +20,7 @@ export default async function AdminPage() {
   await requireAuth()
   const items = await sanityWrite.fetch<Item[]>(
     `*[_type == "landingPage" && !(_id in path("drafts.**"))] | order(_createdAt desc) {
-      _id, title, description, liveUrl, "imageUrl": image.asset->url, ratingCount, ratingTotal
+      _id, title, description, liveUrl, "imageUrl": image.asset->url, "hasVideo": defined(previewVideo.asset), ratingCount, ratingTotal
     }`
   )
 
@@ -48,7 +49,9 @@ export default async function AdminPage() {
                 <div className="space-y-2 p-4">
                   <h2 className="font-medium text-white">{item.title}</h2>
                   {item.description && <p className="line-clamp-2 text-sm text-neutral-400">{item.description}</p>}
-                  <p className="text-sm text-neutral-400">{avg ? `★ ${avg} (${item.ratingCount})` : 'No ratings yet'}</p>
+                  <p className="text-sm text-neutral-400">
+                    {item.hasVideo ? 'Video preview' : 'Image only'} · {avg ? `★ ${avg} (${item.ratingCount})` : 'No ratings yet'}
+                  </p>
                   <div className="flex items-center justify-between pt-1">
                     {item.liveUrl ? (
                       <a href={item.liveUrl} target="_blank" rel="noreferrer" className="text-sm text-violet-400 hover:underline">

@@ -18,6 +18,28 @@ const TEXT_LIMITS: Record<string, number> = {
 }
 const URL_FIELDS = ['resumeUrl', 'githubUrl', 'linkedinUrl', 'twitterUrl', 'instagramUrl']
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const SERVICE_COUNT = 4
+
+/** The four "My services" rows. Empty fields are left out so the portfolio uses its built-in text. */
+function parseServices(str: (k: string) => string) {
+  const services = []
+  for (let i = 0; i < SERVICE_COUNT; i++) {
+    const title = str(`service${i}Title`)
+    const description = str(`service${i}Description`)
+    const points = [0, 1, 2].map((p) => str(`service${i}Point${p}`)).filter(Boolean)
+    if (title.length > 60) return { error: `Service ${i + 1} title must be 60 characters or less` }
+    if (description.length > 200) return { error: `Service ${i + 1} sentence must be 200 characters or less` }
+    if (points.some((p) => p.length > 60)) return { error: `Service ${i + 1} bullets must be 60 characters or less` }
+    services.push({
+      _key: `service${i}`,
+      _type: 'service',
+      ...(title && { title }),
+      ...(description && { description }),
+      ...(points.length && { points }),
+    })
+  }
+  return { services }
+}
 
 export async function saveSettings(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAuth()
@@ -36,6 +58,9 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   values.email = str('email')
   if (values.email && !EMAIL.test(values.email)) return { error: 'Contact email is not valid' }
 
+  const parsedServices = parseServices(str)
+  if ('error' in parsedServices) return { error: parsedServices.error }
+
   const profileAsset = str('profileAsset')
   const shareAsset = str('shareAsset')
   if ([profileAsset, shareAsset].some((id) => id && !isImageAssetId(id))) return { error: 'Invalid image upload' }
@@ -46,6 +71,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
     if (value) set[key] = value
     else unset.push(key)
   }
+  set.services = parsedServices.services
   const ref = (id: string) => ({ _type: 'image', asset: { _type: 'reference', _ref: id } })
   if (profileAsset) set.profileImage = ref(profileAsset)
   else if (formData.get('removeProfile') === 'on') unset.push('profileImage')

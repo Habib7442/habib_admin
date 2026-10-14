@@ -9,7 +9,34 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
+export type ServiceInitial = { title?: string; description?: string; points?: string[] }
+
+// Same text the portfolio falls back to (lib/services.ts there), so the form starts filled in.
+const SERVICE_DEFAULTS: Required<ServiceInitial>[] = [
+  {
+    title: 'Full-stack development',
+    description: 'Web apps and SaaS products built end to end — database, API, auth, and a fast, polished front end.',
+    points: ['Next.js, React & TypeScript', 'APIs, auth & databases', 'Deployed, monitored, handed over cleanly'],
+  },
+  {
+    title: 'Landing pages',
+    description: 'A one-page website that explains what you offer and gets visitors to call, book or buy.',
+    points: ['Written and laid out around your offer', 'Loads fast on every phone', 'Set up to be found on Google'],
+  },
+  {
+    title: 'Posters & social media',
+    description: 'Posters and social media posts that match your brand and make people stop scrolling.',
+    points: ['Event and offer posters', 'Instagram & LinkedIn posts', 'Carousels and story formats'],
+  },
+  {
+    title: 'Branding & visual identity',
+    description: 'A logo, colours and fonts that make everything your business puts out look like it belongs together.',
+    points: ['Logo design', 'Brand colours & fonts', 'Templates your team can reuse'],
+  },
+]
+
 export type SettingsInitial = {
+  services?: ServiceInitial[]
   name?: string
   tagline?: string
   bio?: string
@@ -102,6 +129,33 @@ export function SettingsForm({ initial }: { initial: SettingsInitial }) {
           <Field id="twitterUrl" label="X / Twitter" type="url" placeholder="https://x.com/…" defaultValue={initial.twitterUrl} />
           <Field id="instagramUrl" label="Instagram" type="url" placeholder="https://instagram.com/…" defaultValue={initial.instagramUrl} />
         </div>
+      </Section>
+
+      <Section title="Services (home page)">
+        <p className="text-sm text-neutral-400">
+          Each row shows one plain-language sentence and three short bullet points. Leave a field empty to use the built-in text.
+        </p>
+        {SERVICE_DEFAULTS.map((fallback, i) => {
+          const s = initial.services?.[i] ?? {}
+          return (
+            <fieldset key={i} className="space-y-3 rounded-lg border border-white/10 p-4">
+              <legend className="px-1 text-sm text-neutral-300">{String(i + 1).padStart(2, '0')}</legend>
+              <Field id={`service${i}Title`} label="Title" maxLength={60} defaultValue={s.title ?? fallback.title} />
+              <Field id={`service${i}Description`} label="One sentence" maxLength={200} defaultValue={s.description ?? fallback.description} />
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[0, 1, 2].map((p) => (
+                  <Field
+                    key={p}
+                    id={`service${i}Point${p}`}
+                    label={`Bullet ${p + 1}`}
+                    maxLength={60}
+                    defaultValue={s.points ? s.points[p] : fallback.points[p]}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          )
+        })}
       </Section>
 
       <Section title="SEO defaults">
