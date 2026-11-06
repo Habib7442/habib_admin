@@ -1,4 +1,5 @@
 import {blog} from './blog'
+import {carouselTemplate} from './carouselTemplate'
 import {contactMessage} from './contactMessage'
 import {design} from './design'
 import {landingPage} from './landingPage'
@@ -12,6 +13,7 @@ export const schemaTypes = [
   landingPage,
   project,
   product,
+  carouselTemplate,
   testimonial,
   design,
   blog,
