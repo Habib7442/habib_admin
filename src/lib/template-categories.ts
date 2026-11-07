@@ -16,6 +16,7 @@ export const TEMPLATE_TYPE_OPTIONS = [
   { value: 'reel', label: 'Reel', path: 'reels', defaultSize: '1080 × 1920' },
   { value: 'story', label: 'Story', path: 'stories', defaultSize: '1080 × 1920' },
   { value: 'post', label: 'Post', path: 'posts', defaultSize: '1080 × 1350' },
+  { value: 'website', label: 'Website', path: 'websites', defaultSize: '1440 px wide' },
 ] as const
 
 export const TEMPLATE_TYPES: string[] = TEMPLATE_TYPE_OPTIONS.map((t) => t.value)

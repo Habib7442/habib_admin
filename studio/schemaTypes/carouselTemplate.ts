@@ -14,6 +14,7 @@ export const templateTypes = [
   {title: 'Reel', value: 'reel'},
   {title: 'Story', value: 'story'},
   {title: 'Post', value: 'post'},
+  {title: 'Website', value: 'website'},
 ]
 
 // Canva social media templates shown on the portfolio's /templates pages. Free ones link straight to
