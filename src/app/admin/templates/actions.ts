@@ -7,13 +7,14 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
 import { deleteDocWithAssets, isHttpUrl, isImageAssetId, sanityWrite, slugTaken, withAssetCleanup } from '@/lib/sanity'
 import { generateSlug } from '@/lib/utils/slug'
-import { TEMPLATE_CATEGORIES } from '@/lib/template-categories'
+import { TEMPLATE_CATEGORIES, TEMPLATE_TYPES, templateTypePath } from '@/lib/template-categories'
 import type { FormState } from '../actions'
 
 const MAX_SLIDES = 20
 
 type Parsed = {
   title: string
+  templateType: string
   slug: string
   description: string
   category: string
@@ -35,6 +36,7 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   const slug = generateSlug(str('slug') || title).replace(/^-+|-+$/g, '')
   const description = str('description')
   const category = str('category')
+  const templateType = str('templateType') || 'carousel'
   const size = str('size')
   const isFree = formData.get('isFree') === 'on'
   const price = isFree ? '' : str('price')
@@ -49,6 +51,7 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   if (!slug) return { error: 'Slug could not be generated. Enter one manually.' }
   if (!description) return { error: 'Description is required' }
   if (description.length > 300) return { error: 'Description must be 300 characters or less' }
+  if (!TEMPLATE_TYPES.includes(templateType)) return { error: 'Choose a type' }
   if (!TEMPLATE_CATEGORIES.includes(category)) return { error: 'Choose a category' }
   if (size.length > 30) return { error: 'Slide size must be 30 characters or less' }
   if (price.length > 20) return { error: 'Price label must be 20 characters or less' }
@@ -61,7 +64,7 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   if (newSlideAssets.some((id) => !isImageAssetId(id))) return { error: 'Invalid image upload' }
 
   return {
-    title, slug, description, category, size, isFree, price, buyLink, canvaLink,
+    title, templateType, slug, description, category, size, isFree, price, buyLink, canvaLink,
     featured: formData.get('featured') === 'on', order, newSlideAssets, removeKeys,
   }
 }
@@ -72,6 +75,12 @@ function slideItems(assetIds: string[]) {
     _key: randomUUID().slice(0, 12),
     asset: { _type: 'reference', _ref: id },
   }))
+}
+
+/** Portfolio pages for a template: the hub, its type section and its own page. */
+function templatePaths(p: Pick<Parsed, 'templateType' | 'slug'>) {
+  const section = `/templates/${templateTypePath(p.templateType)}`
+  return [section, `${section}/${p.slug}`]
 }
 
 async function refresh(paths: string[] = []) {
@@ -91,6 +100,7 @@ export async function createTemplate(_prev: FormState, formData: FormData): Prom
     await sanityWrite.create({
       _type: 'carouselTemplate',
       title: p.title,
+      templateType: p.templateType,
       slug: { _type: 'slug', current: p.slug },
       description: p.description,
       category: p.category,
@@ -108,7 +118,7 @@ export async function createTemplate(_prev: FormState, formData: FormData): Prom
     return { error: 'Saving to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  await refresh([`/templates/${p.slug}`])
+  await refresh(templatePaths(p))
   redirect('/admin/templates')
 }
 
@@ -133,6 +143,7 @@ export async function updateTemplate(id: string, _prev: FormState, formData: For
 
     const set: Record<string, unknown> = {
       title: p.title,
+      templateType: p.templateType,
       slug: { _type: 'slug', current: p.slug },
       description: p.description,
       category: p.category,
@@ -153,7 +164,7 @@ export async function updateTemplate(id: string, _prev: FormState, formData: For
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  await refresh([`/templates/${p.slug}`])
+  await refresh(templatePaths(p))
   redirect('/admin/templates')
 }
 

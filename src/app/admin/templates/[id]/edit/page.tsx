@@ -10,7 +10,7 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
 
   const doc = await sanityWrite.fetch<TemplateInitial | null>(
     `*[_type == "carouselTemplate" && _id == $id][0]{
-      title, "slug": slug.current, description, category, size, isFree, price, buyLink, canvaLink, featured, order,
+      title, "templateType": coalesce(templateType, "carousel"), "slug": slug.current, description, category, size, isFree, price, buyLink, canvaLink, featured, order,
       "slides": slides[]{ "key": _key, "url": asset->url }
     }`,
     { id }

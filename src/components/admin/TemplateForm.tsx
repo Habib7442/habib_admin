@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-
-import { TEMPLATE_CATEGORY_OPTIONS } from '@/lib/template-categories'
+import { TEMPLATE_CATEGORY_OPTIONS, TEMPLATE_TYPE_OPTIONS } from '@/lib/template-categories'
 
 export type TemplateInitial = {
   title?: string
+  templateType?: string
   slug?: string
   description?: string
   category?: string
@@ -60,6 +60,8 @@ export function TemplateForm({ heading, submitLabel, action, initial = {} }: Pro
   }, {})
   const [previews, setPreviews] = useState<string[]>([])
   const [isFree, setIsFree] = useState(initial.isFree ?? false)
+  const [templateType, setTemplateType] = useState<string>(initial.templateType ?? 'carousel')
+  const [size, setSize] = useState<string>(initial.size ?? '1080 × 1440')
   const isEdit = !!initial.slides?.length
 
   return (
@@ -81,6 +83,30 @@ export function TemplateForm({ heading, submitLabel, action, initial = {} }: Pro
         <Textarea id="description" name="description" rows={3} maxLength={300} required defaultValue={initial.description} />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="templateType">Type</Label>
+        <select
+          id="templateType"
+          name="templateType"
+          value={templateType}
+          onChange={(e) => {
+            const next = e.target.value
+            // Keep the size in step with the type unless it was typed in by hand.
+            const typed = TEMPLATE_TYPE_OPTIONS.some((t) => t.defaultSize === size)
+            if (typed || !size) setSize(TEMPLATE_TYPE_OPTIONS.find((t) => t.value === next)?.defaultSize ?? size)
+            setTemplateType(next)
+          }}
+          className={selectClass}
+        >
+          {TEMPLATE_TYPE_OPTIONS.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+        <p className="text-xs text-neutral-500">
+          Shown on the site at /templates/{TEMPLATE_TYPE_OPTIONS.find((t) => t.value === templateType)?.path}/…
+        </p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
@@ -91,8 +117,8 @@ export function TemplateForm({ heading, submitLabel, action, initial = {} }: Pro
           </select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="size">Slide size</Label>
-          <Input id="size" name="size" maxLength={30} defaultValue={initial.size ?? '1080 × 1440'} />
+          <Label htmlFor="size">Size (px)</Label>
+          <Input id="size" name="size" maxLength={30} value={size} onChange={(e) => setSize(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="order">Order (lower first)</Label>

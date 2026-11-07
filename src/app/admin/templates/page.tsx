@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { requireAuth } from '@/lib/session'
 import { sanityWrite } from '@/lib/sanity'
 import { Button } from '@/components/ui/button'
-import { TEMPLATE_CATEGORY_OPTIONS } from '@/lib/template-categories'
+import { TEMPLATE_CATEGORY_OPTIONS, TEMPLATE_TYPE_OPTIONS } from '@/lib/template-categories'
 import { DeleteButton } from './DeleteButton'
 
 type Item = {
   _id: string
   title: string
+  templateType: string
   slug?: string
   category?: string
   isFree?: boolean
@@ -22,7 +23,7 @@ export default async function TemplatesPage() {
   await requireAuth()
   const items = await sanityWrite.fetch<Item[]>(
     `*[_type == "carouselTemplate" && !(_id in path("drafts.**"))] | order(coalesce(order, 0) asc, _createdAt desc) {
-      _id, title, "slug": slug.current, category, isFree, price, featured,
+      _id, title, "templateType": coalesce(templateType, "carousel"), "slug": slug.current, category, isFree, price, featured,
       "slideCount": count(slides), "coverUrl": slides[0].asset->url
     }`
   )
@@ -32,7 +33,7 @@ export default async function TemplatesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">Templates</h1>
-          <p className="text-sm text-neutral-400">Canva carousel templates, shown on the portfolio&apos;s /templates page.</p>
+          <p className="text-sm text-neutral-400">Canva templates (carousels, reels, stories, posts), shown on the portfolio&apos;s /templates pages.</p>
         </div>
         <Button asChild>
           <Link href="/admin/templates/new">+ Add template</Link>
@@ -61,8 +62,9 @@ export default async function TemplatesPage() {
                 </div>
                 <p className="text-sm text-neutral-400">
                   {[
+                    TEMPLATE_TYPE_OPTIONS.find((t) => t.value === item.templateType)?.label,
                     TEMPLATE_CATEGORY_OPTIONS.find((c) => c.value === item.category)?.label,
-                    `${item.slideCount} slides`,
+                    `${item.slideCount} images`,
                     item.featured && 'On home page',
                   ]
                     .filter(Boolean)
