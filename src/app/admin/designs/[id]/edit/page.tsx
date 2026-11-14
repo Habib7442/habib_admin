@@ -10,7 +10,7 @@ export default async function EditDesign({ params }: { params: Promise<{ id: str
 
   const doc = await sanityWrite.fetch<DesignInitial | null>(
     `*[_type == "design" && _id == $id][0]{
-      title, description, category, tools, tags, featured,
+      title, "slug": slug.current, description, category, tools, tags, featured,
       "imageUrl": image.asset->url,
       "images": images[]{ "key": _key, "url": asset->url }
     }`,

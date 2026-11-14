@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 export type DesignInitial = {
   title?: string
+  slug?: string
   description?: string
   category?: string
   tools?: string[]
@@ -58,6 +59,12 @@ export function DesignForm({ heading, submitLabel, action, initial = {} }: Props
       <div className="space-y-2">
         <Label htmlFor="title">Title *</Label>
         <Input id="title" name="title" maxLength={100} required defaultValue={initial.title} />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="slug">Slug {isEdit ? '' : '(optional, generated from title)'}</Label>
+        <Input id="slug" name="slug" placeholder="vice-city-poster" defaultValue={initial.slug} />
+        <p className="text-xs text-neutral-400">Page address on the portfolio: /work/design/&lt;slug&gt;</p>
       </div>
 
       <div className="space-y-2">

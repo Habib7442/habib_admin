@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { revalidatePortfolio } from '@/lib/portfolio'
 import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/session'
-import { deleteDocWithAssets, isImageAssetId, sanityWrite, withAssetCleanup } from '@/lib/sanity'
+import { deleteDocWithAssets, isImageAssetId, sanityWrite, slugTaken, withAssetCleanup } from '@/lib/sanity'
+import { generateSlug } from '@/lib/utils/slug'
 import { DESIGN_CATEGORY_VALUES } from '@/lib/design-categories'
 import type { FormState } from '../actions'
 
@@ -13,6 +14,7 @@ const MAX_EXTRA_IMAGES = 20
 
 type Parsed = {
   title: string
+  slug: string
   description: string
   category: string
   tools: string[]
@@ -31,12 +33,14 @@ function parseForm(formData: FormData): Parsed | { error: string } {
   const str = (k: string) => String(formData.get(k) ?? '').trim()
 
   const title = str('title')
+  const slug = generateSlug(str('slug') || title).replace(/^-+|-+$/g, '')
   const category = str('category')
   const imageAsset = str('imageAsset')
   const newImageAssets = formData.getAll('imageAssets').map((v) => String(v).trim()).filter(Boolean)
 
   if (!title) return { error: 'Title is required' }
   if (title.length > 100) return { error: 'Title must be 100 characters or less' }
+  if (!slug) return { error: 'Slug could not be generated. Enter one manually.' }
   if (!DESIGN_CATEGORY_VALUES.includes(category)) return { error: 'Choose a category' }
   if (newImageAssets.length > MAX_EXTRA_IMAGES) {
     return { error: `You can add up to ${MAX_EXTRA_IMAGES} extra images at a time` }
@@ -47,6 +51,7 @@ function parseForm(formData: FormData): Parsed | { error: string } {
 
   return {
     title,
+    slug,
     description: str('description'),
     category,
     tools: list(str('tools')),
@@ -78,11 +83,13 @@ export async function createDesign(_prev: FormState, formData: FormData): Promis
   const p = parseForm(formData)
   if ('error' in p) return p
   if (!p.imageAsset) return { error: 'Main image is required' }
+  if (await slugTaken('design', p.slug)) return { error: `The slug "${p.slug}" is already used by another design` }
 
   try {
     await sanityWrite.create({
       _type: 'design',
       title: p.title,
+      slug: { _type: 'slug', current: p.slug },
       category: p.category,
       image: { _type: 'image', asset: { _type: 'reference', _ref: p.imageAsset } },
       images: galleryItems(p.newImageAssets),
@@ -96,7 +103,7 @@ export async function createDesign(_prev: FormState, formData: FormData): Promis
     return { error: 'Saving to Sanity failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  await refreshDesigns()
+  await refreshDesigns([`/work/design/${p.slug}`])
   redirect('/admin/designs')
 }
 
@@ -105,6 +112,7 @@ export async function updateDesign(id: string, _prev: FormState, formData: FormD
 
   const p = parseForm(formData)
   if ('error' in p) return p
+  if (await slugTaken('design', p.slug, id)) return { error: `The slug "${p.slug}" is already used by another design` }
 
   try {
     const current = await sanityWrite.fetch<{ images?: { _key: string }[] } | null>(
@@ -117,6 +125,7 @@ export async function updateDesign(id: string, _prev: FormState, formData: FormD
 
     const set: Record<string, unknown> = {
       title: p.title,
+      slug: { _type: 'slug', current: p.slug },
       category: p.category,
       images: [...kept, ...galleryItems(p.newImageAssets)],
       tools: p.tools,
@@ -135,7 +144,7 @@ export async function updateDesign(id: string, _prev: FormState, formData: FormD
     return { error: 'Update failed. Check SANITY_API_WRITE_TOKEN.' }
   }
 
-  await refreshDesigns()
+  await refreshDesigns([`/work/design/${p.slug}`])
   redirect('/admin/designs')
 }
 

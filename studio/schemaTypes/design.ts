@@ -23,6 +23,14 @@ export const design = defineType({
       validation: (rule) => rule.required().max(100),
     }),
     defineField({
+      name: 'slug',
+      title: 'Slug',
+      type: 'slug',
+      description: 'The design page address on the portfolio: /work/design/<slug>.',
+      options: {source: 'title', maxLength: 96},
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: 'category',
       title: 'Category',
       type: 'string',
